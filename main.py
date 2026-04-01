@@ -6,25 +6,31 @@ import time
 import os
 import json
 
-@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.0.5")
+@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.0.6")
 class KeywordLandminePlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
         
-        # 修复报错：移除入参中的 config，改为自行读取配置或使用空字典以触发默认值
+        # 读取同目录下的 config.json 文件（AstrBot 网页端会直接修改这个文件）
         self.config = self._load_config()
 
+        # 核心设置
+        self.enable = bool(self.config.get("enable", True))
         self.owner_id = str(self.config.get("owner_qq", "3524815759")).strip()
         self.owner_umo = f"llbot:FriendMessage:{self.owner_id}" if self.owner_id.isdigit() else None
         
-        self.enable = bool(self.config.get("enable", True))
-        self.enable_rank = bool(self.config.get("enable_rank", True))
-        self.rank_show_count = int(self.config.get("rank_show_count", 5))
+        # 游戏参数设置
         self.mute_minutes = int(self.config.get("mute_minutes", 5))
         self.apply_groups = self.config.get("apply_groups", [])
         self.keyword_count = int(self.config.get("keyword_count", 5))
         self.min_len = int(self.config.get("min_keyword_len", 2))
         self.max_len = int(self.config.get("max_keyword_len", 4))
+        
+        # 指令开关设置 (对应网页配置)
+        self.enable_today_cmd = bool(self.config.get("enable_today_cmd", True))
+        self.enable_blur_cmd = bool(self.config.get("enable_blur_cmd", True))
+        self.enable_rank_cmd = bool(self.config.get("enable_rank_cmd", True))
+        self.enable_refresh_cmd = bool(self.config.get("enable_refresh_cmd", True))
         
         self.landmines = []
         self.step_records = {}
@@ -32,7 +38,7 @@ class KeywordLandminePlugin(Star):
         self.refresh_landmines()
 
     def _load_config(self):
-        """尝试读取插件目录下的 config.json，如果没有则返回空字典"""
+        """读取插件目录下的 config.json，供网页端和代码使用"""
         config_path = os.path.join(os.path.dirname(__file__), "config.json")
         if os.path.exists(config_path):
             try:
@@ -42,14 +48,14 @@ class KeywordLandminePlugin(Star):
                 logger.error(f"读取配置文件失败: {e}")
         return {}
 
-    def refresh_landmines(self):
+    def refresh_landmines(self, force=False):
         today = time.strftime("%Y-%m-%d")
-        if today == self.last_refresh_date and self.landmines:
+        if not force and today == self.last_refresh_date and self.landmines:
             return
         self.landmines = self._generate_landmines()
         self.step_records.clear()
         self.last_refresh_date = today
-        logger.info(f"[雷词游戏] 今日雷词已刷新 → {self.landmines}")
+        logger.info(f"[雷词游戏] 雷词已刷新 → {self.landmines}")
 
     def _generate_landmines(self):
         chars = "的一是在不了和有大这主中人上为国地到说时大们产以事他为地于政经成以会可分生同老因其所同等部道想作经家国法同"
@@ -63,7 +69,7 @@ class KeywordLandminePlugin(Star):
 
     @filter.command("今日雷词")
     async def generate_today(self, event: AstrMessageEvent):
-        if not self.enable: return
+        if not self.enable or not self.enable_today_cmd: return
         self.refresh_landmines()
         if not self.owner_umo:
             yield event.plain_result("⚠️ 未配置主人 QQ")
@@ -77,7 +83,7 @@ class KeywordLandminePlugin(Star):
 
     @filter.command("今日雷点")
     async def show_blur(self, event: AstrMessageEvent):
-        if not self.enable: return
+        if not self.enable or not self.enable_blur_cmd: return
         self.refresh_landmines()
         blurred = [self._blur(k) for k in self.landmines]
         text = "【今日雷点】\n" + "\n".join(blurred) + "\n小心别踩雷哦～"
@@ -85,16 +91,31 @@ class KeywordLandminePlugin(Star):
 
     @filter.command("踩雷排行")
     async def show_rank(self, event: AstrMessageEvent):
-        if not self.enable or not self.enable_rank: return
+        if not self.enable or not self.enable_rank_cmd: return
         self.refresh_landmines()
         if not self.step_records:
             yield event.plain_result("今日暂无踩雷记录～")
             return
         sorted_rank = sorted(self.step_records.items(), key=lambda x: x[1]["count"], reverse=True)
         lines = ["【今日踩雷排行榜】"]
-        for i, (uid, data) in enumerate(sorted_rank[:self.rank_show_count], 1):
+        # 默认显示前5名，若需修改也可加入 config
+        for i, (uid, data) in enumerate(sorted_rank[:5], 1):
             lines.append(f"{i}. {data['name']}（踩雷 {data['count']} 次）")
         yield event.plain_result("\n".join(lines))
+
+    # 新增：刷新雷词指令
+    @filter.command("刷新雷词")
+    async def force_refresh_cmd(self, event: AstrMessageEvent):
+        if not self.enable or not self.enable_refresh_cmd: return
+        
+        # 权限校验：只允许配置的主人刷新，防止群员乱刷
+        if str(event.get_sender_id()) != self.owner_id:
+            yield event.plain_result("⚠️ 权限不足：只有配置的主人可以刷新雷词！")
+            return
+            
+        self.refresh_landmines(force=True)
+        blurred = [self._blur(k) for k in self.landmines]
+        yield event.plain_result("✅ 雷词已强制刷新！\n【最新雷点】\n" + "\n".join(blurred))
 
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def check_landmine(self, event: AstrMessageEvent):
