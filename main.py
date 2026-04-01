@@ -4,7 +4,7 @@ from astrbot.api import logger, AstrBotConfig
 import random
 import time
 
-@register("keyword_landmine", "Care", "Keyword Landmine 雷词游戏", "1.0.2")
+@register("keyword_landmine", "Care", "Keyword Landmine 雷词游戏", "1.3.0")
 class KeywordLandminePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
