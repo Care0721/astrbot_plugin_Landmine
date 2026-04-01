@@ -4,7 +4,7 @@ from astrbot.api import logger, AstrBotConfig
 import random
 import time
 
-@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.3.0")
+@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.0.4")
 class KeywordLandminePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -25,7 +25,6 @@ class KeywordLandminePlugin(Star):
         self.landmines = []
         self.step_records = {}
         self.last_refresh_date = ""
-        
         self.refresh_landmines()
 
     def refresh_landmines(self):
