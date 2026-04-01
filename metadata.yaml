@@ -3,4 +3,4 @@ display_name: 踩雷王（词语版） # 用于展示的名字，可以是方便
 desc: 每日5个雷词，说中即禁言+踩雷王！ # 插件简短描述
 version: v1.3.0 # 插件版本号。格式：v1.1.1 或者 v1.1
 author: Care # 作者
-repo: https://github.com/Care0721/astrbot_plugin_Landmine/tree/astrbot_plugin_Landmine # 插件的仓库地址
+repo: https://github.com/Care0721/astrbot_plugin_Landmine # 插件的仓库地址
