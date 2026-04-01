@@ -4,7 +4,7 @@ from astrbot.api import logger, AstrBotConfig
 import random
 import time
 
-@register("keyword_landmine", "Care", "Keyword Landmine 雷词游戏", "1.3.0")
+@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.3.0")
 class KeywordLandminePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -23,7 +23,7 @@ class KeywordLandminePlugin(Star):
         self.max_len = int(self.config.get("max_keyword_len", 4))
         
         self.landmines = []
-        self.step_records = {}          # 踩雷排行 {user_id: {"name": , "count": }}
+        self.step_records = {}
         self.last_refresh_date = ""
         
         self.refresh_landmines()
@@ -82,18 +82,15 @@ class KeywordLandminePlugin(Star):
             lines.append(f"{i}. {data['name']}（踩雷 {data['count']} 次）")
         yield event.plain_result("\n".join(lines))
 
-    # 监听群消息（已修正为最新写法）
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def check_landmine(self, event: AstrMessageEvent):
         if not self.enable: return
         group_id = event.get_group_id()
         if self.apply_groups and str(group_id) not in [str(g) for g in self.apply_groups]:
             return
-        
         self.refresh_landmines()
         msg = event.message_str.strip()
         if not msg: return
-        
         triggered = [k for k in self.landmines if k in msg]
         if not triggered: return
 
@@ -116,4 +113,4 @@ class KeywordLandminePlugin(Star):
             
             yield event.plain_result(f"💥 {user_name} 踩雷成功！已禁言 {self.mute_minutes} 分钟并改名为「踩雷王」")
         except Exception as e:
-            yield event.plain_result(f"💥 {user_name} 踩雷！但 Bot 无管理权限，无法执行禁言和改名。")
+            yield event.plain_result(f"💥 {user_name} 踩雷！但 Bot 无管理权限，无法禁言和改名。")
