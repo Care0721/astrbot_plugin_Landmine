@@ -1,14 +1,18 @@
 from astrbot.api.event import filter, AstrMessageEvent, MessageChain
 from astrbot.api.star import Star, register, Context
-from astrbot.api import logger, AstrBotConfig
+from astrbot.api import logger
 import random
 import time
+import os
+import json
 
 @register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.0.5")
 class KeywordLandminePlugin(Star):
-    def __init__(self, context: Context, config: AstrBotConfig):
+    def __init__(self, context: Context):
         super().__init__(context)
-        self.config = config   # ← 这一行必须有
+        
+        # 修复报错：移除入参中的 config，改为自行读取配置或使用空字典以触发默认值
+        self.config = self._load_config()
 
         self.owner_id = str(self.config.get("owner_qq", "3524815759")).strip()
         self.owner_umo = f"llbot:FriendMessage:{self.owner_id}" if self.owner_id.isdigit() else None
@@ -27,7 +31,17 @@ class KeywordLandminePlugin(Star):
         self.last_refresh_date = ""
         self.refresh_landmines()
 
-    # 后面函数保持不变（refresh_landmines、_generate_landmines 等）
+    def _load_config(self):
+        """尝试读取插件目录下的 config.json，如果没有则返回空字典"""
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"读取配置文件失败: {e}")
+        return {}
+
     def refresh_landmines(self):
         today = time.strftime("%Y-%m-%d")
         if today == self.last_refresh_date and self.landmines:
