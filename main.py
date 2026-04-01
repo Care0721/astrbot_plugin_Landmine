@@ -4,12 +4,12 @@ from astrbot.api import logger, AstrBotConfig
 import random
 import time
 
-@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.0.4")
+@register("keyword_landmine", "Care", "踩雷王 (词语版)", "1.0.5")
 class KeywordLandminePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
-        self.config = config
-        
+        self.config = config   # ← 这一行必须有
+
         self.owner_id = str(self.config.get("owner_qq", "3524815759")).strip()
         self.owner_umo = f"llbot:FriendMessage:{self.owner_id}" if self.owner_id.isdigit() else None
         
@@ -27,6 +27,7 @@ class KeywordLandminePlugin(Star):
         self.last_refresh_date = ""
         self.refresh_landmines()
 
+    # 后面函数保持不变（refresh_landmines、_generate_landmines 等）
     def refresh_landmines(self):
         today = time.strftime("%Y-%m-%d")
         if today == self.last_refresh_date and self.landmines:
