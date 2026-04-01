@@ -4,7 +4,7 @@ from astrbot.api import logger, AstrBotConfig
 import random
 import time
 
-@register("keyword_landmine", "Care", "Keyword Landmine 雷词游戏", "1.0.1")
+@register("keyword_landmine", "Care", "Keyword Landmine 雷词游戏", "1.0.2")
 class KeywordLandminePlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
@@ -26,15 +26,14 @@ class KeywordLandminePlugin(Star):
         self.step_records = {}          # 踩雷排行 {user_id: {"name": , "count": }}
         self.last_refresh_date = ""
         
-        self.refresh_landmines()  # 初始化
+        self.refresh_landmines()
 
     def refresh_landmines(self):
-        """每天凌晨自动刷新雷词 + 清空当日排行"""
         today = time.strftime("%Y-%m-%d")
         if today == self.last_refresh_date and self.landmines:
             return
         self.landmines = self._generate_landmines()
-        self.step_records.clear()                     # 每日排行重置
+        self.step_records.clear()
         self.last_refresh_date = today
         logger.info(f"[雷词游戏] 今日雷词已刷新 → {self.landmines}")
 
@@ -50,35 +49,29 @@ class KeywordLandminePlugin(Star):
 
     @filter.command("今日雷词")
     async def generate_today(self, event: AstrMessageEvent):
-        if not self.enable:
-            return
+        if not self.enable: return
         self.refresh_landmines()
         if not self.owner_umo:
-            yield event.plain_result("⚠️ 未配置主人 QQ，无法私聊发送雷词")
+            yield event.plain_result("⚠️ 未配置主人 QQ")
             return
         text = "【今日完整雷词】\n" + "\n".join(self.landmines) + "\n\n请勿泄露！"
         try:
             await self.context.send_message(self.owner_umo, MessageChain().message(text))
-            yield event.plain_result("✅ 已生成今日雷词并私聊发送给主人")
+            yield event.plain_result("✅ 已私聊发送给主人")
         except Exception as e:
             yield event.plain_result(f"❌ 私聊失败：{str(e)}")
 
     @filter.command("今日雷点")
     async def show_blur(self, event: AstrMessageEvent):
-        if not self.enable:
-            return
+        if not self.enable: return
         self.refresh_landmines()
-        if not self.landmines:
-            yield event.plain_result("今日暂无雷点")
-            return
         blurred = [self._blur(k) for k in self.landmines]
         text = "【今日雷点】\n" + "\n".join(blurred) + "\n小心别踩雷哦～"
         yield event.plain_result(text)
 
     @filter.command("踩雷排行")
     async def show_rank(self, event: AstrMessageEvent):
-        if not self.enable or not self.enable_rank:
-            return
+        if not self.enable or not self.enable_rank: return
         self.refresh_landmines()
         if not self.step_records:
             yield event.plain_result("今日暂无踩雷记录～")
@@ -87,43 +80,40 @@ class KeywordLandminePlugin(Star):
         lines = ["【今日踩雷排行榜】"]
         for i, (uid, data) in enumerate(sorted_rank[:self.rank_show_count], 1):
             lines.append(f"{i}. {data['name']}（踩雷 {data['count']} 次）")
-        if len(sorted_rank) > self.rank_show_count:
-            lines.append(f"... 还有 {len(sorted_rank) - self.rank_show_count} 人踩雷")
         yield event.plain_result("\n".join(lines))
 
-    @filter.group_message()
+    # 监听群消息（已修正为最新写法）
+    @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def check_landmine(self, event: AstrMessageEvent):
-        if not self.enable:
-            return
+        if not self.enable: return
         group_id = event.get_group_id()
         if self.apply_groups and str(group_id) not in [str(g) for g in self.apply_groups]:
             return
+        
         self.refresh_landmines()
         msg = event.message_str.strip()
-        if not msg:
-            return
+        if not msg: return
+        
         triggered = [k for k in self.landmines if k in msg]
-        if not triggered:
-            return
-        # 踩雷！
+        if not triggered: return
+
         user_id = event.get_sender_id()
         user_name = event.get_sender_name() or "群员"
         if str(user_id) == self.owner_id:
             yield event.plain_result("主人踩雷了，本次不处罚～")
             return
+
         mute_sec = self.mute_minutes * 60
         try:
-            # 禁言 + 改群名片
             await self.context.api.set_group_ban(group_id=group_id, user_id=user_id, duration=mute_sec)
             await self.context.api.set_group_card(group_id=group_id, user_id=user_id, card="踩雷王")
-            # 记录排行
+            
             uid = str(user_id)
             if uid not in self.step_records:
                 self.step_records[uid] = {"name": user_name, "count": 0}
             self.step_records[uid]["count"] += 1
             self.step_records[uid]["name"] = user_name
+            
             yield event.plain_result(f"💥 {user_name} 踩雷成功！已禁言 {self.mute_minutes} 分钟并改名为「踩雷王」")
-            logger.info(f"[雷词游戏] {user_name}({user_id}) 踩雷 {triggered}")
         except Exception as e:
-            logger.warning(f"禁言/改名失败（Bot 可能无管理权限）：{str(e)}")
-            yield event.plain_result(f"💥 {user_name} 踩雷！但 Bot 无管理权限，无法禁言和改名片。")
+            yield event.plain_result(f"💥 {user_name} 踩雷！但 Bot 无管理权限，无法执行禁言和改名。")
