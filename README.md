@@ -1,14 +1,14 @@
-# astrbot-plugin-helloworld
-
-AstrBot 插件模板 / A template plugin for AstrBot plugin feature
-
-> [!NOTE]
-> This repo is just a template of [AstrBot](https://github.com/AstrBotDevs/AstrBot) Plugin.
-> 
-> [AstrBot](https://github.com/AstrBotDevs/AstrBot) is an agentic assistant for both personal and group conversations. It can be deployed across dozens of mainstream instant messaging platforms, including QQ, Telegram, Feishu, DingTalk, Slack, LINE, Discord, Matrix, etc. In addition, it provides a reliable and extensible conversational AI infrastructure for individuals, developers, and teams. Whether you need a personal AI companion, an intelligent customer support agent, an automation assistant, or an enterprise knowledge base, AstrBot enables you to quickly build AI applications directly within your existing messaging workflows.
-
-# Supports
-
-- [AstrBot Repo](https://github.com/AstrBotDevs/AstrBot)
-- [AstrBot Plugin Development Docs (Chinese)](https://docs.astrbot.app/dev/star/plugin-new.html)
-- [AstrBot Plugin Development Docs (English)](https://docs.astrbot.app/en/dev/star/plugin-new.html)
+🎮 Keyword Landmine - 雷词游戏
+游戏名称：雷词炸弹 / 今日雷词
+游戏玩法：
+每天凌晨，机器人会随机生成 5个隐藏雷词（由汉字组成，长度2~4个字）。
+输入 今日雷点：可以查看今日雷词的模糊版本（例如 “一**” “国”），帮助大家猜测。
+输入 今日雷词：只有机器人主人能收到完整雷词列表（私聊发送）。
+在群里正常聊天时，如果有人不小心说出完整雷词，就会踩雷！
+踩雷后果（需要机器人有群管理权限）：
+立即被禁言5分钟
+群名片自动修改为 「踩雷王」
+其他功能：
+输入 踩雷排行：查看今日谁踩雷最多（前5名）
+每天凌晨自动刷新全新雷词和排行榜
+主人踩雷不处罚（保护机制）
