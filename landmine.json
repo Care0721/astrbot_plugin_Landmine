@@ -1,0 +1,50 @@
+{
+  "owner_qq": {
+    "type": "string",
+    "title": "主人 QQ 号",
+    "description": "用于私聊发送今日完整雷词",
+    "default": "123456789"
+  },
+  "enable": {
+    "type": "boolean",
+    "title": "启用雷词游戏",
+    "default": true
+  },
+  "enable_rank": {
+    "type": "boolean",
+    "title": "启用踩雷排行榜",
+    "default": true
+  },
+  "rank_show_count": {
+    "type": "integer",
+    "title": "排行榜显示人数",
+    "default": 5
+  },
+  "mute_minutes": {
+    "type": "integer",
+    "title": "踩雷禁言时长（分钟）",
+    "default": 5
+  },
+  "apply_groups": {
+    "type": "array",
+    "title": "生效群聊 ID（留空=所有群）",
+    "description": "多个群用数组格式，例如 [\"12345678\", \"87654321\"]",
+    "items": { "type": "string" },
+    "default": []
+  },
+  "keyword_count": {
+    "type": "integer",
+    "title": "每日雷词数量",
+    "default": 5
+  },
+  "min_keyword_len": {
+    "type": "integer",
+    "title": "雷词最小长度",
+    "default": 2
+  },
+  "max_keyword_len": {
+    "type": "integer",
+    "title": "雷词最大长度",
+    "default": 4
+  }
+}
